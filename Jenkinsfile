@@ -18,7 +18,7 @@ pipeline {
         stage('Build') {
             steps {
                 sh 'echo Build successful'
-                sh 'tar -cvf app.tar .'
+                sh 'tar -cvf app.tar app.js package.json'
             }
         }
 
@@ -39,10 +39,10 @@ pipeline {
         stage('Run App on EC2') {
             steps {
                 sh '''
-                ssh -o StrictHostKeyChecking=no -i $KEY_PATH $EC2_USER@$EC2_HOST << EOF
+                ssh -o StrictHostKeyChecking=no -i $KEY_PATH $EC2_USER@$EC2_HOST "
                 tar -xvf app.tar
                 node app.js &
-                EOF
+                "
                 '''
             }
         }
