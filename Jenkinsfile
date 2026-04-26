@@ -21,6 +21,19 @@ pipeline {
             }
         }
 
+        stage('Verify Files') {
+            steps {
+                sh '''
+                echo "===== FILE CHECK ====="
+                ls -l
+                echo "===== app.js ====="
+                cat app.js
+                echo "===== package.json ====="
+                cat package.json
+                '''
+            }
+        }
+
         stage('Build') {
             steps {
                 sh '''
@@ -28,14 +41,9 @@ pipeline {
 
                 rm -f app.tar
 
-                ls -l app.js package.json
-
-                echo "----- LOCAL package.json -----"
-                cat package.json
-                echo "------------------------------"
-
                 tar -cvf app.tar app.js package.json
 
+                echo "===== TAR CONTENT ====="
                 tar -tvf app.tar
                 '''
             }
@@ -50,9 +58,12 @@ pipeline {
         stage('Deploy to EC2') {
             steps {
                 sh '''
+                echo "Copying artifact to EC2..."
+
                 scp -o StrictHostKeyChecking=no -i $KEY_PATH app.tar $EC2_USER@$EC2_HOST:/home/ec2-user/
 
                 ssh -o StrictHostKeyChecking=no -i $KEY_PATH $EC2_USER@$EC2_HOST "
+                echo 'File received:'
                 ls -lh app.tar
                 "
                 '''
@@ -64,10 +75,11 @@ pipeline {
                 sh '''
                 ssh -o StrictHostKeyChecking=no -i $KEY_PATH $EC2_USER@$EC2_HOST "
 
+                echo 'Stopping old app if running...'
+                pkill node || true
+
                 rm -rf app
                 mkdir app
-
-                sleep 2
 
                 tar -xvf app.tar -C app
 
@@ -77,7 +89,10 @@ pipeline {
                 cat package.json
                 echo '------------------------'
 
-                node app.js &
+                echo 'Starting app...'
+                nohup node app.js > app.log 2>&1 &
+
+                echo 'App started successfully 🚀'
                 "
                 '''
             }
