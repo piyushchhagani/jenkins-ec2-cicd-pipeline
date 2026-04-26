@@ -15,15 +15,30 @@ pipeline {
             }
         }
 
-        stage('Build') {
-            steps {
-                sh '''
-                echo "Building application..."
-                tar -cvf app.tar app.js package.json
-                '''
-            }
-        }
+       stage('Build') {
+    steps {
+        sh '''
+        echo "Building application..."
 
+        # Clean old artifacts
+        rm -f app.tar
+
+        # Verify files exist
+        ls -l app.js package.json
+
+        # Show content BEFORE packaging
+        echo "----- LOCAL package.json -----"
+        cat package.json
+        echo "------------------------------"
+
+        # Create archive
+        tar -cvf app.tar app.js package.json
+
+        # Verify archive
+        tar -tvf app.tar
+        '''
+    }
+}
         stage('Archive') {
             steps {
                 archiveArtifacts artifacts: 'app.tar', fingerprint: true
