@@ -17,8 +17,10 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh 'echo Build successful'
-                sh 'tar -cvf app.tar app.js package.json'
+                sh '''
+                echo "Building application..."
+                tar -cvf app.tar app.js package.json
+                '''
             }
         }
 
@@ -31,7 +33,13 @@ pipeline {
         stage('Deploy to EC2') {
             steps {
                 sh '''
+                echo "Copying artifact to EC2..."
                 scp -o StrictHostKeyChecking=no -i $KEY_PATH app.tar $EC2_USER@$EC2_HOST:/home/ec2-user/
+
+                echo "Verifying file on EC2..."
+                ssh -o StrictHostKeyChecking=no -i $KEY_PATH $EC2_USER@$EC2_HOST "
+                ls -lh app.tar
+                "
                 '''
             }
         }
@@ -39,12 +47,31 @@ pipeline {
         stage('Run App on EC2') {
             steps {
                 sh '''
+                echo "Running application on EC2..."
+
                 ssh -o StrictHostKeyChecking=no -i $KEY_PATH $EC2_USER@$EC2_HOST "
+                
+                # Clean previous deployment
                 rm -rf app
                 mkdir app
+
+                # Wait to ensure file is fully written
+                sleep 2
+
+                # Extract fresh files
                 tar -xvf app.tar -C app
+
                 cd app
+
+                # Debug: show file content
+                echo '----- package.json -----'
+                cat package.json
+                echo '------------------------'
+
+                # Run application
                 node app.js &
+
+                echo 'App started successfully 🚀'
                 "
                 '''
             }
