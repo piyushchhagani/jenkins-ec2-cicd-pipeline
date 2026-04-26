@@ -40,7 +40,10 @@ pipeline {
             steps {
                 sh '''
                 ssh -o StrictHostKeyChecking=no -i $KEY_PATH $EC2_USER@$EC2_HOST "
-                tar -xvf app.tar
+                rm -rf app
+                mkdir app
+                tar -xvf app.tar -C app
+                cd app
                 node app.js &
                 "
                 '''
