@@ -4,10 +4,10 @@ pipeline {
     stages {
 
         stage('Clone Code') {
-            steps {
-                git 'https://github.com/piyushchhagani/jenkins-ec2-cicd-pipeline.git'
-            }
-        }
+    steps {
+        git branch: 'main', url: 'https://github.com/piyushchhagani/jenkins-ec2-cicd-pipeline.git'
+    }
+}
 
         stage('Build') {
             steps {
